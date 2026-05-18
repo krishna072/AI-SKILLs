@@ -1,0 +1,87 @@
+version: 1.0
+project_guidelines:
+  project_architecture:
+    monorepo_structure: "Microservices and frontend apps coexist in a single or modular workspace."
+    shared_kernel: "A centralized 'utils' or 'shared' package handles all database models, core configurations, base classes (controllers/services), and universal helpers."
+    service_layering:
+      controllers: "Thin entry points. Handle request parsing, token validation, early return checks, and HTTP response formatting."
+      services: "Thick logic layer. Contains all business rules, orchestration, and inter-service HTTP calls."
+      jobs: "Scheduled cron tasks or background queue processors."
+      utils: "Service-specific helpers and local configurations."
+      cms: "Static mappings, constants, error messages, and seed data."
+      routes: "Express router definitions attaching middlewares and mapping to controllers."
+    frontend_layering:
+      routes: "Maps URLs to layout-wrapped page components."
+      layout: "High-Order Components (HOCs) or wrappers that apply consistent UI frames based on authentication or user roles."
+      components: "Reusable UI blocks."
+      lib/utils: "Shared logic, Apollo clients, localization configs."
+
+  function_guidelines:
+    naming_conventions: "camelCase for all functions. Action-oriented prefixes (e.g., get, update, delete, fetch)."
+    declarations: "Arrow functions (const myFunc = () => {}) are preferred for callbacks, iterators, and React components. Class methods are declared natively and bound in the constructor (this.method = this.method.bind(this))."
+    parameters: "Object destructuring is required for functions taking multiple or optional arguments (e.g., function({ data, headers })). Default parameters are heavily used."
+    async_await: "Async/await is the absolute standard. Avoid raw .then()/.catch() unless necessary."
+    promises: "Use Promise.all() for concurrent operations when executing async tasks inside array iterators (e.g., await Promise.all(data.map(async (item) => {})))."
+    returns: "Early returns (guard clauses) are required to reduce nesting. Avoid else blocks."
+
+  variable_naming_guidelines:
+    general: "Strict camelCase."
+    constants: "camelCase for local constants. UPPER_SNAKE_CASE is permitted for global environment variables."
+    classes_and_models: "Strict PascalCase for Database Models (Users, Order) and Classes (BaseController, BaseService)."
+    boolean_flags: "Must be prefixed with 'is', 'has', 'can', or 'should' (e.g., isWebhook, hasError)."
+    collections_and_arrays: "Always use pluralized naming (e.g., productIds, users)."
+
+  file_naming_conventions:
+    backend_logic: "camelCase (e.g., authController.js, baseHelper.js)."
+    react_components: "camelCase for directory/file names is the legacy pattern, but PascalCase is acceptable for React Component files in newer projects."
+    index_files: "Use index.js to group exports from a directory."
+
+  conditional_logic_guidelines:
+    guard_clauses: "Mandatory. Return early on validation failures, unauthorized states, or missing data (e.g., if (!user) return false;)."
+    falsy_checks: "Heavy reliance on truthy/falsy evaluation (e.g., if (!data.length))."
+    switch_statements: "Discouraged. Use object maps/dictionaries or if/else if chains instead."
+
+  error_handling_guidelines:
+    try_catch: "Required for all controller endpoints, service methods, and external API calls."
+    logging: "Use the shared, centralized logger instance (logger.info, logger.error, logger.warn). Do not use console.log in production code."
+    client_responses: "Standardized through a shared helper (e.g., baseHelper.response(res, baseHelper.error(message), 422))."
+    error_messages: "Abstracted into a shared constants file or handled via a dedicated error helper to ensure consistency. Do not hardcode strings in controllers."
+
+  API_and_routing_guidelines:
+    routing_structure: "Grouped by feature prefix in the router file (e.g., /api/user/webhook, /api/user/setting)."
+    middlewares: "Applied at the router level to protect groups of routes (e.g., verifyToken, verifyWebhookToken)."
+    request_validation: "Synchronous, explicit validation at the beginning of the controller using a shared validation method (e.g., this.validateRequired(data, ['id']))."
+    payload_sanitization: "Extract strictly expected fields from req.body (e.g., using the 'only' package) and trim strings to prevent over-posting."
+    response_shapes:
+      success: "{ status: 'ok', data: <payload> }"
+      error: "{ status: 'error', error: <message> }"
+
+  microservice_communication_guidelines:
+    protocol: "Synchronous HTTP REST requests are the dominant pattern (e.g., using request-promise or axios)."
+    uri_construction: "URLs must be built dynamically using shared environment configurations (e.g., uri: `${setting.productService}/api/action`)."
+    headers: "Auth tokens, webhook tokens, and tracing headers must be explicitly passed to inter-service requests."
+
+  frontend_guidelines:
+    routing: "Declarative routing (React Router) mapping paths to components."
+    layouts: "Use High-Order Components (HOCs) or layout wrappers to apply consistent UI frames based on authentication state (e.g., <PrivateLayout /> vs <PublicLayout />)."
+    hooks: "useEffect for component initialization, side-effects, and injecting third-party scripts (e.g., localization, live chat)."
+    context_providers: "Wrap the app root in necessary providers (e.g., ApolloProvider, UI Library Providers)."
+
+  reusability_and_shared_logic_guidelines:
+    shared_package: "The shared 'utils' package is the single source of truth for reused logic."
+    inheritance: "Controllers MUST extend a BaseController. Services MUST extend a BaseService. This inherits required validation routines, standardized database connections, and helper methods."
+    db_models: "Exported globally through a centralized DbCollection object in the shared package. Microservices access models dynamically based on context/tenant (e.g., dbHelper.getCollection(tenantId))."
+
+  extensibility_guidelines:
+    new_microservices:
+      - "Create a new root directory using the standard prefix/naming convention."
+      - "Scaffold with app/controllers, app/services, app/config, and server.js."
+      - "Import the shared utils package in package.json."
+    new_models:
+      - "Add the schema to the shared utils package."
+      - "Export the model in the centralized DbCollection index."
+    new_features:
+      - "Add routes to the specific microservice's router."
+      - "Create a thin controller method."
+      - "Place business logic in a service class."
+      - "If logic crosses domains, use HTTP calls to the respective microservice."

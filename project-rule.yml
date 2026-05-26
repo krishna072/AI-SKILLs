@@ -1,0 +1,246 @@
+version: 1.0
+
+project_coding_guidelines:
+  enforcement:
+    auto_scan: true
+    scan_targets:
+      - "**/*.js"
+      - "**/*.jsx"
+      - "**/*.ts"
+      - "**/*.tsx"
+      - "**/*.css"
+      - "**/*.scss"
+      - "**/*.json"
+      - "**/*.yml"
+      - "**/*.md"
+
+    behavior:
+      old_codebase: "Analyze entire codebase and show violations before modifying files."
+      new_codebase: "Automatically enforce all rules on new code."
+      update_flow: "Always ask before modifying existing files."
+
+  ###############################################################
+  # FILE NAMING & STRUCTURE RULES
+  ###############################################################
+  file_structure:
+    file_naming_conventions:
+
+      ###############################################################
+      # (A) GENERAL NAMING RULES
+      ###############################################################
+      general:
+        - "Default rule: All filenames (except UI components) MUST be lowercase and use kebab-case."
+        - "Never mix naming styles inside the same folder."
+
+      ###############################################################
+      # (B) COMPONENT FILE NAMING RULES
+      ###############################################################
+      react_ui_components:
+        - "React component files MUST use PascalCase file names. Example: UserCard.jsx, VendorDetails.tsx"
+        - "React component MUST export a PascalCase component that matches file name."
+        - "React component files MUST NOT be named in kebab-case or camelCase."
+        - "Component files MUST live only in approved folders: components/, ui/, common/, or features/**/components"
+        - "If a file contains JSX or TSX, it will be treated as a component file and must follow PascalCase naming."
+
+      ###############################################################
+      # (C) HELPERS, UTILS, SERVICES (camelCase/kebab-case only)
+      ###############################################################
+      folder_based_naming:
+        - "Folder placement defines file role (utils/, lib/, services/, components/, styles/, etc.)."
+        - "Do NOT repeat the folder name in the filename (e.g. use app/utils/store.js, not store.utils.js)."
+        - "Use direct camelCase or kebab-case filenames inside role folders."
+        - "Only use role/folder suffixes when required by the framework or tooling (e.g. .test.js, .spec.ts, Remix route conventions)."
+
+      helpers:
+        - "Helper filenames in helpers/ or lib/ MUST use camelCase or kebab-case (never PascalCase)."
+
+      utils:
+        - "Utility filenames in utils/ MUST use camelCase or kebab-case (never PascalCase)."
+
+      services:
+        - "Service and API handler files MUST use camelCase."
+        - "Services MUST NOT use PascalCase file names."
+
+      tests:
+        - "Test files MUST mirror source file structure."
+        - "Test files MUST end in .test.ts / .test.js / .spec.ts / .spec.js"
+
+    allowed_component_locations:
+      - "app/components"
+      - "app/ui"
+      - "app/common"
+      - "components"
+      - "ui"
+      - "common"
+      - "features/*/components"
+      - "app/routes/*/components"
+
+    component_location_rules:
+      - "React UI components MUST NOT be stored in helpers/, utils/, services/, or server folders."
+      - "Feature components MUST stay inside their feature folder."
+      - "Shared components MUST stay in /components or /ui."
+
+  ###############################################################
+  # COMPONENT NAMING RULES
+  ###############################################################
+  component_naming_guidelines:
+
+    filenames:
+      - "Component filenames MUST be PascalCase (e.g., SyncStatusModal.tsx)."
+      - "Components MUST NOT use kebab-case, snake_case, or camelCase file names."
+      - "Component filename MUST match exported component name."
+
+    exported_names:
+      - "React components MUST always export a PascalCase function or class."
+      - "Default exported components MUST still match file name."
+
+    detection_rules:
+      - "If a JSX/TSX file exports a component but filename is not PascalCase → throw violation."
+      - "If exported component name does not match filename → throw violation."
+      - "If component file is placed outside allowed folders → throw violation."
+
+    auto_correction_behavior:
+      - "Never rename automatically—always suggest rename and wait for approval."
+      - "Recommend appropriate folder placement if incorrect."
+
+  ###############################################################
+  # VARIABLE NAMING RULES
+  ###############################################################
+  variable_naming:
+    rules:
+      - "Variables MUST be descriptive and meaningful."
+      - "Avoid single-letter variables except for i/j/k in loops."
+      - "Avoid vague names like data, info, p, x unless necessary."
+      - "Boolean variables MUST start with is/has/can/should."
+
+    examples:
+      good:
+        - "const syncJobProgress = job.progress;"
+        - "const isSynced = job.status === 'DONE';"
+      bad:
+        - "const p = job.progress;"
+        - "const x = true;"
+
+  ###############################################################
+  # FUNCTION DESIGN RULES
+  ###############################################################
+  function_guidelines:
+    naming:
+      - "UI component functions MUST use PascalCase."
+      - "Utility, service, and helper functions MUST use camelCase."
+
+    structure:
+      - "All conditionals MUST use curly braces."
+      - "Return early to reduce nesting."
+      - "Avoid large complex functions: split when needed."
+
+  ###############################################################
+  # CONDITIONAL STRUCTURE RULES
+  ###############################################################
+  conditionals:
+    rules:
+      - "All if/else statements MUST use curly braces—even single-line."
+      - "No inline ternaries for complex logic."
+      - "Nested logic MUST be flattened where possible."
+
+  ###############################################################
+  # SECURITY RULES
+  ###############################################################
+  security_rules:
+    general:
+      - "Never log sensitive data."
+      - "Use environment variables for all secrets."
+      - "Validate and sanitize user input."
+
+    backend:
+      - "Wrap all async operations with try/catch."
+      - "Never expose raw errors."
+
+    frontend:
+      - "Escape dynamic UI values."
+      - "Never use dangerouslySetInnerHTML unless justified."
+
+  ###############################################################
+  # PERFORMANCE RULES
+  ###############################################################
+  performance_rules:
+    react:
+      - "Use React.memo for stable reusable components."
+      - "Avoid inline functions inside JSX unless necessary."
+      - "Use useCallback & useMemo when beneficial."
+      - "Never use index as key in lists."
+
+    backend:
+      - "Use pagination for large DB reads."
+      - "Avoid N+1 queries."
+      - "Cache common lookups."
+
+    ###############################################################
+    # NEW → STRICT CODE-SPLITTING RULES (ADDED, NOT REPLACING)
+    ###############################################################
+    code_splitting:
+      - "Always split large UI components into logical chunks using dynamic imports."
+      - "Pages/routes MUST load heavy modules using lazy() + Suspense."
+      - "Do not import admin modules or rarely used features in main bundles."
+      - "Shared components MUST be extracted only when they are used in 3+ places."
+      - "Avoid bundling server-only logic inside client bundles."
+
+    ###############################################################
+    # NEW → PERFORMANCE-FIRST ARCHITECTURE RULES
+    ###############################################################
+    architecture:
+      - "Ensure zero duplicate imports across bundles."
+      - "Use tree-shakable libraries and avoid heavy all-in-one libraries."
+      - "Use lightweight variants of libraries where possible."
+      - "Large JSON/data MUST be fetched on-demand, never bundled."
+
+    ###############################################################
+    # NEW → SERVER PERFORMANCE RULES
+    ###############################################################
+    server_optimization:
+      - "Use background jobs for heavy processing."
+      - "Always cache results of expensive DB operations."
+      - "Use streaming for large responses when available."
+      - "Avoid blocking the event loop with long sync operations."
+
+  ###############################################################
+  # CODE REVIEW AUTOMATION
+  ###############################################################
+  code_review_automation:
+    perform_on_every_prompt: true
+    checks:
+      - component_naming
+      - pascalcase_component_filename
+      - exported_component_name_match
+      - invalid_component_location
+      - variable_naming
+      - conditional_brackets
+      - file_naming
+      - service_file_camelcase
+      - security_rules
+      - performance_rules
+      - code_splitting            # added
+      - architecture              # added
+      - server_optimization       # added
+
+    output:
+      existing_repo_behavior: |
+        For any update request:
+        1. Scan repo for violations.
+        2. Report issues with examples.
+        3. Ask confirmation before refactoring.
+        4. Apply safe, incremental changes.
+
+  ###############################################################
+  # NEW CODE GENERATION RULES
+  ###############################################################
+  new_code_generation:
+    enforce_all_rules: true
+    ensure:
+      - "React components ALWAYS use PascalCase filenames & exports."
+      - "Server/services/API files ALWAYS use camelCase."
+      - "Components ALWAYS placed in allowed folders."
+      - "Generated logic NEVER breaks existing code unless approved."
+      - "New code ALWAYS follows performance & security rules."
+      - "New code ALWAYS follows code-splitting / architecture rules."
+      - "New code MUST be optimized for minimal bundle size."
